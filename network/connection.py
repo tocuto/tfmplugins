@@ -44,5 +44,5 @@ class Connection:
 		self.closing = True
 		self.closed_at = time.perf_counter() + 1.0
 
-	def parse_packet(self, packet):
+	def parse_packet(self, payload, outbound):
 		raise NotImplementedError

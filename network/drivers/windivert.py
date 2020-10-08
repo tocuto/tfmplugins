@@ -51,7 +51,7 @@ class WinDivertDriver(DriverBase):
 						continue
 
 					elif packet.payload:
-						if not conn.parse_packet(packet):
+						if not conn.parse_packet(packet.payload, packet.is_outbound):
 							continue
 
 					self.w.send(packet)

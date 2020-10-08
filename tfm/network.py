@@ -84,14 +84,14 @@ class TFMConnection(Connection):
 	def create_client(self, *args, **kwargs):
 		return TFMClient(*args, **kwargs)
 
-	def parse_packet(self, tcp):
-		reader = self.outbound if tcp.is_outbound else self.inbound
+	def parse_packet(self, payload, outbound):
+		reader = self.outbound if outbound else self.inbound
 
-		for packet in reader.consume_payload(tcp.payload):
+		for packet in reader.consume_payload(payload):
 			if self.needs_handshake:
 				# Ignore already created connections
 
-				if tcp.is_inbound:
+				if not outbound:
 					self.ignore()
 					break
 
@@ -120,7 +120,7 @@ class TFMConnection(Connection):
 				packet.pos = 0
 				self.needs_handshake = False
 
-			elif tcp.is_inbound and self.name == "main":
+			elif not outbound and self.name == "main":
 				# Switch bulle
 
 				CCC = packet.readCode()
@@ -133,6 +133,6 @@ class TFMConnection(Connection):
 
 				packet.pos = 0
 
-			self.client.packet_received(tcp.is_outbound, self, packet)
+			self.client.packet_received(outbound, self, packet)
 
 		return True

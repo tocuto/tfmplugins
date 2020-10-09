@@ -1,7 +1,7 @@
 # Transformice Plugins
 This project allows you to easily analyze and add plugins to Transformice. It scans your network activity that is going to transformice servers and gives that information to the plugins you add.<br/><br/>
 
-Special thanks to @antiafk for the idea and @Athesdrake for some code ([watchdog.py](tfmplugins/utils/watchdog.py), [eventbased.py](tfmplugins/utils/eventbased.py), [packet.py](tfmplugins/tfm/packet.py))
+Special thanks to [@antiafk](https://github.com/antiafk) for the idea and [@Athesdrake](https://github.com/Athesdrake) for some code ([watchdog.py](tfmplugins/utils/watchdog.py), [eventbased.py](tfmplugins/utils/eventbased.py), [packet.py](tfmplugins/tfm/packet.py))
 
 ## How does it work?
 As it's been pointed out, what this does is it uses a driver to scan internet packets sent to transformice servers. This driver is meant to be easily replaceable to make the project work in more platforms.<br/>

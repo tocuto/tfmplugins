@@ -28,6 +28,8 @@ import traceback
 
 
 class EventBased:
+	"""A class that implements asynchronous events
+	"""
 	def __init__(self):
 		self._waiters = {}
 
@@ -47,9 +49,9 @@ class EventBased:
 	def wait_for(self, event, condition=None, timeout=None, stopPropagation=False):
 		"""Wait for an event.
 		:param event: :class:`str` the event name.
-		:param condition: Optionnal[`function`] A predicate to check what to wait for.
+		:param condition: Optional[`function`] A predicate to check what to wait for.
 			The arguments must meet the parameters of the event being waited for.
-		:param timeout: Optionnal[:class:`int`] the number of seconds before
+		:param timeout: Optional[:class:`int`] the number of seconds before
 			throwing asyncio.TimeoutError
 		:return: [`asyncio.Future`](https://docs.python.org/3/library/asyncio-future.html#asyncio.Future)
 			a future that you must await.

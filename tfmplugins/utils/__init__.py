@@ -22,6 +22,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from tfm.client import TFMClient
-from tfm.network import TFMConnection, main_ip
-from tfm.packet import Packet
+from tfmplugins.utils.eventbased import EventBased
+from tfmplugins.utils.watchdog import Watcher, PluginsWatcher

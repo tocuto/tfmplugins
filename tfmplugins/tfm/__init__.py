@@ -22,27 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import time
-
-
-class Connection:
-	def __init__(self, network, local, remote):
-		self.network = network
-		self.local = local
-		self.remote = remote
-
-		self.ignored = False
-		self.closing = False
-		self.closed_at = 0
-
-	def ignore(self):
-		self.ignored = True
-
-	def close(self):
-		self.ignore()
-
-		self.closing = True
-		self.closed_at = time.perf_counter() + 1.0
-
-	def parse_packet(self, payload, outbound):
-		raise NotImplementedError
+from tfmplugins.tfm.client import TFMClient
+from tfmplugins.tfm.network import TFMConnection, main_ip
+from tfmplugins.tfm.packet import Packet

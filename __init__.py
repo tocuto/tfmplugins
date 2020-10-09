@@ -24,9 +24,9 @@ SOFTWARE.
 
 import asyncio
 
-from network import NetworkScanner
-from network.drivers.windivert import WinDivertDriver
-from tfm import TFMConnection, main_ip
+from tfmplugins.network import NetworkScanner
+from tfmplugins.network.drivers.windivert import WinDivertDriver
+from tfmplugins.tfm import TFMConnection, main_ip
 
 
 if __name__ == '__main__':

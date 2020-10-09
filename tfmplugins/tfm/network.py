@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from network import Connection
-from tfm.packet import Packet
-from tfm.client import TFMClient
+from tfmplugins.network import Connection
+from tfmplugins.tfm.packet import Packet
+from tfmplugins.tfm.client import TFMClient
 
 
 main_ip = "51.75.130.180"
@@ -32,6 +32,23 @@ bulle_keys = {}
 
 
 class TFMPacketReader:
+	"""Represents a Transformice packet reader.
+	Every Transformice connection has two: one for inbound connections and other for outbound ones
+
+	Parameters
+	----------
+	extra: :class:`int`
+		Extra bytes that are assumed to be in length (1 for outbound connections, 0 otherwise)
+
+	Attributes
+	----------
+	extra: :class:`int`
+		Extra bytes that are assumed to be in length (1 for outbound connections, 0 otherwise)
+	buffer: :class:`bytearray`
+		Unread bytes
+	length: :class:`int`
+		Expected length of the following packet. Generally 0 (not expecting anything yet).
+	"""
 	def __init__(self, extra):
 		self.extra = extra
 
@@ -39,6 +56,9 @@ class TFMPacketReader:
 		self.length = 0
 
 	def consume_payload(self, payload):
+		"""Consumes a packet payload and yields Transformice packets
+		:param payload: :class:`bytes` or :class:`bytearray` the packet payload
+		"""
 		self.buffer.extend(payload)
 
 		while len(self.buffer) > self.length:
@@ -62,6 +82,17 @@ class TFMPacketReader:
 
 
 class TFMConnection(Connection):
+	"""Represents a network connection using Transformice protocol.
+
+	Parameters
+	----------
+	network: :class:`network.scanner.NetworkScanner`
+		The network scanner the connection belongs to.
+	local: :class:`tuple`
+		The local address ("ip", port)
+	remote: :class:`tuple`
+		The remote address ("ip", port)
+	"""
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
@@ -79,12 +110,24 @@ class TFMConnection(Connection):
 			self.handshake_ccc = (44, 1)
 
 	def create_reader(self, *args, **kwargs):
+		"""Creates a packet reader
+		:param *args: the arguments to pass to the reader factory
+		"""
 		return TFMPacketReader(*args, **kwargs)
 
 	def create_client(self, *args, **kwargs):
+		"""Creates a Transformice client
+		:param *args: the arguments to pass to the client factory
+		"""
 		return TFMClient(*args, **kwargs)
 
 	def parse_packet(self, payload, outbound):
+		"""Parses a packet (only called if the connection is not flagged as ignored)
+		:param payload: :class:`bytes` or :class:`bytearray` the packet payload
+		:param outbound: :class:`bool` whether the packet direction is outbound (True)
+			or inbound (False)
+		:return: :class:`bool` whether to send the packet to the other end or not
+		"""
 		reader = self.outbound if outbound else self.inbound
 
 		for packet in reader.consume_payload(payload):

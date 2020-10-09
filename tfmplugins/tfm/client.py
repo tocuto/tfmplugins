@@ -26,13 +26,45 @@ import sys
 import asyncio
 import traceback
 
-from utils import EventBased, PluginsWatcher
+from tfmplugins.utils import EventBased, PluginsWatcher
 
 
 main_loop = asyncio.get_event_loop()
 
 
 class TFMClient(EventBased):
+	"""Represents a Transformice client.
+
+	.. _event loop: https://docs.python.org/3/library/asyncio-eventloops.html
+
+	Parameters
+	----------
+	main: :class:`tfm.network.TFMConnection`
+		The connection to the main server.
+	loop: Optional[event loop]
+		The `event loop`_ to use for asynchronous operations. The default value is
+		a cached version of the loop of the main thread.
+
+	Attributes
+	----------
+	loop: event loop
+		The `event loop`_ to use for asynchronous operations.
+	main: :class:`tfm.network.TFMConnection`
+		The connection to the main server.
+	bulle: Optional[:class:`tfm.network.TFMConnection`]
+		The connection to the bulle server.
+	logged: :class:`bool`
+		Whether the client has logged in or not.
+	id: Optional[:class:`id`]
+		The accout id of the player. 0 for souris.
+	name: Optional[:class:`str`]
+		The name of the account.
+	pid: Optional[:class:`id`]
+		The login id of the player. Unique every connection, even if it uses the same
+		account. This is not 0 for souris.
+	is_souris: :class:`bool`
+		Whether the client has logged in as a souris.
+	"""
 	watcher = PluginsWatcher()
 
 	def __init__(self, main, loop=main_loop):
@@ -50,6 +82,14 @@ class TFMClient(EventBased):
 		super().__init__()
 
 	def packet_received(self, outbound, conn, packet):
+		"""Dispatches the events when receiving some data.
+
+		:param outbound: :class:`bool` whether the packet direction is outbound (True)
+			or inbound (False)
+		:param conn: :class:`tfm.network.TFMConnection` the connection that captured
+			this packet
+		:param packet: :class:`tfm.packet.Packet` the packet
+		"""
 		if outbound:
 			fp = packet.read8()
 			self.dispatch("raw_socket_outbound", conn, fp, packet)
@@ -57,6 +97,16 @@ class TFMClient(EventBased):
 			self.dispatch("raw_socket_inbound", conn, packet)
 
 	async def on_trigger_plugin(self, plugin, sent, *args, **kwargs):
+		"""|coro|
+		Dispatches the data event on a plugin.
+
+		:param plugin: the plugin (any class that implements packet_sent and
+			packet_received coroutines)
+		:param sent: :class:`bool` whether the packet is being sent (True)
+			or received (False)
+		:param *args: arguments to pass to the event
+		:param **kwargs: keyword arguments to pass to the event
+		"""
 		if sent:
 			method = plugin.packet_sent
 		else:
@@ -71,10 +121,25 @@ class TFMClient(EventBased):
 			print(message.format(plugin, tb, "outbound" if sent else "inbound"), file=sys.stderr)
 
 	async def on_raw_socket_outbound(self, conn, fp, packet):
+		"""|coro|
+		Triggered when a packet has been sent to the server.
+
+		:param conn: :class:`tfm.network.TFMConnection` the connection that captured
+			this packet
+		:param fp: :class:`int` the packet fingerprint
+		:param packet: :Class:`tfm.packet.Packet` the captured packet
+		"""
 		async for plugin in self.watcher:
 			self.dispatch("trigger_plugin", plugin, True, conn, fp, packet.copy(copy_pos=True))
 
 	async def on_raw_socket_inbound(self, conn, packet):
+		"""|coro|
+		Triggered when a packet has been received from the server.
+
+		:param conn: :class:`tfm.network.TFMConnection` the connection that captured
+			this packet
+		:param packet: :Class:`tfm.packet.Packet` the captured packet
+		"""
 		if not self.logged:
 			CCC = packet.readCode()
 

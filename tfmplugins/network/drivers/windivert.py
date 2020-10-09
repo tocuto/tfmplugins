@@ -26,10 +26,35 @@ import errno
 import socket
 
 from pydivert import WinDivert
-from network.drivers.driver_base import DriverBase
+from tfmplugins.network.drivers.driver_base import DriverBase
 
 
 class WinDivertDriver(DriverBase):
+	"""Base implementation of a driver (ip scanner). Uses WinDivert to do its job.
+	Scans a single IP for different connections and identifies them by local ip and port.
+
+	Parameters
+	----------
+	network: :class:`network.scanner.NetworkScanner`
+		The network scanner this driver belongs to to
+	ip: :class:`str`
+		The ip to scan
+	connection: :class:`network.connection.Connection`
+		The connection factory used to represent a connection
+
+	Attributes
+	----------
+	network: :class:`network.scanner.NetworkScanner`
+		The network scanner this driver belongs to to
+	ip: :class:`str`
+		The ip to scan
+	connection: :class:`network.connection.Connection`
+		The connection factory used to represent a connection
+	connections: Dict[:class:`network.connection.Connection`]
+		The connection list
+	w: :class:`pydivert.WinDivert`
+		The WinDivert instance
+	"""
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
@@ -38,10 +63,16 @@ class WinDivertDriver(DriverBase):
 		)
 
 	def scan(self):
+		"""A loop that scans the ip until the scanner is closed.
+		"""
 		try:
 			with self.w:
 				for packet in self.w:
-					conn = self.get_connection(packet)
+					conn = self.get_connection(
+						(packet.src_addr, packet.src_port),
+						(packet.dst_addr, packet.dst_port),
+						packet.is_outbound
+					)
 
 					if packet.tcp.fin:
 						conn.close()
@@ -70,6 +101,8 @@ class WinDivertDriver(DriverBase):
 			self.close()
 
 	def close(self):
+		"""Closes the scanner.
+		"""
 		if self.w.is_open:
 			try:
 				self.w.close()

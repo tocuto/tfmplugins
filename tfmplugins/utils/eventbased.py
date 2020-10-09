@@ -5,6 +5,12 @@ import asyncio
 import traceback
 
 
+class InvalidEvent(Exception):
+	"""Exception thrown when you added an invalid event to the client.
+	An event is valid only if its name begin by 'on_' and it is coroutine.
+	"""
+
+
 class EventBased:
 	"""A class that implements asynchronous events
 	"""

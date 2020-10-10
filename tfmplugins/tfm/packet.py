@@ -137,7 +137,11 @@ class Packet:
 		"""Write a string to the buffer. Alias for .writeString"""
 		return self.writeString(string)
 
-	def xor_cipher(self, key, fp):
+	def xor_cipher(self, key, fp, offset=2):
 		"""Cipher the packet with the XOR algorithm."""
-		self.buffer[2:] = (byte ^ key[i % 20] for i, byte in enumerate(self.buffer[2:], fp + 1))
+		self.buffer[offset:] = (byte ^ key[i % 20] for i, byte in enumerate(self.buffer[offset:], fp + 1))
 		return self
+
+	def xor_decipher(self, key, fp):
+		"""Decipher the packet with the XOR algorithm."""
+		return self.xor_decipher(key, fp, offset=3)

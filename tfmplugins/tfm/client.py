@@ -27,6 +27,7 @@ import asyncio
 import traceback
 
 from tfmplugins.utils import EventBased, PluginsWatcher
+from tfmplugins.tfm.packet import Packet
 
 
 main_loop = asyncio.get_event_loop()
@@ -64,6 +65,8 @@ class TFMClient(EventBased):
 		account. This is not 0 for souris.
 	is_souris: :class:`bool`
 		Whether the client has logged in as a souris.
+	msg_keys: Optional[:class:`list`]
+		Message keys. May be None if they haven't been calculated yet.
 	"""
 	watcher = PluginsWatcher()
 
@@ -78,6 +81,9 @@ class TFMClient(EventBased):
 		self.name = None
 		self.pid = None
 		self.is_souris = False
+
+		self.msg_keys = None
+		self._msg_packet = None
 
 		super().__init__()
 
@@ -129,6 +135,15 @@ class TFMClient(EventBased):
 		:param fp: :class:`int` the packet fingerprint
 		:param packet: :Class:`tfm.packet.Packet` the captured packet
 		"""
+		if self.logged:
+			CCC = packet.readCode()
+
+			if CCC == (6, 6): # chat message
+				if self.msg_keys is None and len(packet.buffer) > 22:
+					self._msg_packet = (fp, packet.readBytes(20))
+
+			packet.pos = 1
+
 		async for plugin in self.watcher:
 			self.dispatch("trigger_plugin", plugin, True, conn, fp, packet.copy(copy_pos=True))
 
@@ -151,6 +166,27 @@ class TFMClient(EventBased):
 				packet.read8() # community
 				self.pid = packet.read32()
 				self.is_souris = self.id == 0
+
+			packet.pos = 0
+
+		elif self.msg_keys is None and self._msg_packet is not None:
+			CCC = packet.readCode()
+
+			if CCC == (6, 6):
+				if packet.readUTF() == self.name:
+					fp, ciphered = self._msg_packet
+					deciphered = Packet.new(6, 6).writeBytes(packet.readBytes(20))
+
+					deciphered.xor_cipher(ciphered, -1)
+					deciphered.pos = 2
+
+					start = (fp + 1) % 20
+					last = deciphered.readBytes(20 - start)
+
+					self._msg_packet = None
+					self.msg_keys = []
+					for byte in (deciphered.readBytes(start) + last):
+						self.msg_keys.append(byte)
 
 			packet.pos = 0
 
